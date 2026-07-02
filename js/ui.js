@@ -138,10 +138,21 @@
     }
   }
 
+
+  function formatNumberWithCommas(value) {
+    var amount = Math.max(0, Math.floor(Number(value) || 0));
+    return amount.toLocaleString('ja-JP');
+  }
+
+  function parseCommaNumber(value) {
+    var numericText = String(value || '').replace(/,/g, '').replace(/[^0-9]/g, '');
+    return Number(numericText) || 0;
+  }
+
   // ---- フォームへの初期値反映（保存状態の復元用） ----
 
   function syncFormFromState() {
-    document.getElementById('input-total-bill').value = state.totalBill;
+    document.getElementById('input-total-bill').value = formatNumberWithCommas(state.totalBill);
 
     document.querySelectorAll('.count-row').forEach(function (row) {
       var category = row.dataset.category;
@@ -204,6 +215,29 @@
     }
     syncFormFromState();
     render();
+  }
+
+  function openResetConfirmDialog(onDecision) {
+    var dialog = document.getElementById('reset-confirm-dialog');
+    if (!dialog || typeof dialog.showModal !== 'function') {
+      onDecision(window.confirm('入力内容と設定をすべてリセットします。リセットしてよろしいですか？'));
+      return;
+    }
+
+    function handleClose() {
+      dialog.removeEventListener('close', handleClose);
+      onDecision(dialog.returnValue === 'yes');
+    }
+
+    dialog.returnValue = '';
+    dialog.addEventListener('close', handleClose);
+    dialog.showModal();
+  }
+
+  function confirmAndResetAllState() {
+    openResetConfirmDialog(function (confirmed) {
+      if (confirmed) resetAllState();
+    });
   }
 
   function handleGenderModeChange(newMode) {
@@ -282,7 +316,8 @@
 
   function wireEvents() {
     document.getElementById('input-total-bill').addEventListener('input', function (e) {
-      state.totalBill = Number(e.target.value) || 0;
+      state.totalBill = parseCommaNumber(e.target.value);
+      e.target.value = formatNumberWithCommas(state.totalBill);
       updateRoundingUnitOptions();
       syncRoundingUnitControls();
       render();
@@ -311,7 +346,7 @@
       }
     });
 
-    document.getElementById('button-reset-all').addEventListener('click', resetAllState);
+    document.getElementById('button-reset-all').addEventListener('click', confirmAndResetAllState);
 
     document.querySelectorAll('input[name="gender-mode"]').forEach(function (radio) {
       radio.addEventListener('change', function (e) {

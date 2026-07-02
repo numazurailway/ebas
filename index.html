@@ -19,7 +19,7 @@
   </div>
   <div class="app-header-actions">
     <span class="app-version">v1.0</span>
-    <button type="button" id="button-reset-all" class="btn-reset-all">オールリセット</button>
+    <button type="button" id="button-reset-all" class="btn-reset-all">リセット</button>
   </div>
 </header>
 
@@ -28,7 +28,7 @@
     <h2 id="section-bill-heading">1. 全体会計金額</h2>
     <div class="form-row">
       <label for="input-total-bill">会計金額（円）</label>
-      <input type="number" id="input-total-bill" inputmode="numeric" min="0" step="1" value="0">
+      <input type="text" id="input-total-bill" inputmode="numeric" pattern="[0-9,]*" value="0" autocomplete="off">
     </div>
   </section>
 
@@ -210,6 +210,17 @@
     <div class="confirm-dialog__actions">
       <button type="submit" value="yes" class="confirm-dialog__button confirm-dialog__button--primary">はい</button>
       <button type="submit" value="no" class="confirm-dialog__button">いいえ</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="reset-confirm-dialog" class="confirm-dialog" aria-labelledby="reset-confirm-title">
+  <form method="dialog" class="confirm-dialog__panel">
+    <h2 id="reset-confirm-title">リセット確認</h2>
+    <p>入力内容と設定をすべてリセットします。<br />リセットしてよろしいですか？</p>
+    <div class="confirm-dialog__actions">
+      <button type="submit" value="no" class="confirm-dialog__button">キャンセル</button>
+      <button type="submit" value="yes" class="confirm-dialog__button confirm-dialog__button--primary">リセット</button>
     </div>
   </form>
 </dialog>

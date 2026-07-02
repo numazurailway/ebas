@@ -89,8 +89,12 @@ body {
 }
 
 .app-version {
+  display: block;
+  width: 100%;
   font-size: 0.75rem;
   color: var(--color-navy-700);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 main {
@@ -150,6 +154,7 @@ section h3 {
 }
 
 .form-row input[type="number"],
+.form-row input[type="text"],
 .form-row select {
   min-height: var(--tap-target-min);
   padding: 0.25rem 0.5rem;
@@ -157,6 +162,12 @@ section h3 {
   border-radius: var(--radius-sm);
   font-size: 1rem;
   max-width: 10rem;
+}
+
+.form-row input[type="number"],
+.form-row input[type="text"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .count-row {
