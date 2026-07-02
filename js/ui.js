@@ -191,6 +191,13 @@
     render();
   }
 
+  function resetParticipantCounts() {
+    state.categoryGenderCounts = normalizeCategoryGenderCounts({});
+    state.partialCounts = normalizePartialCounts({});
+    syncFormFromState();
+    render();
+  }
+
   function handleGenderModeChange(newMode) {
     state.genderMode = newMode;
     ['discount', 'fixed_weight', 'matrix'].forEach(function (mode) {
@@ -295,6 +302,8 @@
         });
       }
     });
+
+    document.getElementById('button-reset-counts').addEventListener('click', resetParticipantCounts);
 
     document.querySelectorAll('input[name="gender-mode"]').forEach(function (radio) {
       radio.addEventListener('change', function (e) {
