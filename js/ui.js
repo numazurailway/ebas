@@ -10,32 +10,36 @@
 
   var STORAGE_KEY = 'ebas_state_v1';
 
-  var state = {
-    totalBill: 0,
-    categoryGenderCounts: {
-      drink: { male: 0, female: 0 },
-      no_drink: { male: 0, female: 0 },
-      partial: { male: 0, female: 0 },
-      no_charge: 0,
-    },
-    partialParticipation: {
-      drink: { male: false, female: false },
-      no_drink: { male: false, female: false },
-    },
-    partialCounts: {
-      drink: { male: 0, female: 0 },
-      no_drink: { male: 0, female: 0 },
-    },
-    genderMode: calc.GENDER_MODE.DISCOUNT,
-    modeConfigs: {
-      discount: shallowCopy(calc.DEFAULT_DISCOUNT_CONFIG),
-      fixed_weight: shallowCopy(calc.DEFAULT_FIXED_GENDER_WEIGHT),
-      matrix: deepCopyMatrix(calc.DEFAULT_CATEGORY_GENDER_MATRIX),
-    },
-    roundingUnit: calc.DEFAULT_ROUNDING_UNIT,
-    customRoundingUnit: 500,
-    roundingMethod: calc.DEFAULT_ROUNDING_METHOD,
-  };
+  var state = createInitialState();
+
+  function createInitialState() {
+    return {
+      totalBill: 0,
+      categoryGenderCounts: {
+        drink: { male: 0, female: 0 },
+        no_drink: { male: 0, female: 0 },
+        partial: { male: 0, female: 0 },
+        no_charge: 0,
+      },
+      partialParticipation: {
+        drink: { male: false, female: false },
+        no_drink: { male: false, female: false },
+      },
+      partialCounts: {
+        drink: { male: 0, female: 0 },
+        no_drink: { male: 0, female: 0 },
+      },
+      genderMode: calc.GENDER_MODE.DISCOUNT,
+      modeConfigs: {
+        discount: shallowCopy(calc.DEFAULT_DISCOUNT_CONFIG),
+        fixed_weight: shallowCopy(calc.DEFAULT_FIXED_GENDER_WEIGHT),
+        matrix: deepCopyMatrix(calc.DEFAULT_CATEGORY_GENDER_MATRIX),
+      },
+      roundingUnit: calc.DEFAULT_ROUNDING_UNIT,
+      customRoundingUnit: 500,
+      roundingMethod: calc.DEFAULT_ROUNDING_METHOD,
+    };
+  }
 
   function shallowCopy(obj) {
     var copy = {};
@@ -191,9 +195,13 @@
     render();
   }
 
-  function resetParticipantCounts() {
-    state.categoryGenderCounts = normalizeCategoryGenderCounts({});
-    state.partialCounts = normalizePartialCounts({});
+  function resetAllState() {
+    state = createInitialState();
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      // localStorage が使えない環境でもリセット処理は継続する
+    }
     syncFormFromState();
     render();
   }
@@ -303,7 +311,7 @@
       }
     });
 
-    document.getElementById('button-reset-counts').addEventListener('click', resetParticipantCounts);
+    document.getElementById('button-reset-all').addEventListener('click', resetAllState);
 
     document.querySelectorAll('input[name="gender-mode"]').forEach(function (radio) {
       radio.addEventListener('change', function (e) {
@@ -345,7 +353,6 @@
           syncRoundingUnitControls();
           render();
         });
-        syncRoundingUnitControls();
         return;
       }
       state.roundingUnit = Number(e.target.value);

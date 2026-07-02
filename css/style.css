@@ -80,10 +80,17 @@ body {
   color: var(--color-navy-700);
 }
 
+.app-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
 .app-version {
   font-size: 0.75rem;
   color: var(--color-navy-700);
-  align-self: flex-start;
 }
 
 main {
@@ -108,22 +115,7 @@ section h2 {
   padding-bottom: 0.5rem;
 }
 
-.section-heading-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  border-bottom: 1px solid var(--color-gray-300);
-  margin-bottom: 0.5rem;
-}
-
-.section-heading-row h2 {
-  flex: 1 1 auto;
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.btn-reset-counts {
+.btn-reset-all {
   min-height: 36px;
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--color-gray-300);
@@ -135,7 +127,7 @@ section h2 {
   white-space: nowrap;
 }
 
-.btn-reset-counts:hover {
+.btn-reset-all:hover {
   background: var(--color-gray-100);
 }
 
@@ -418,13 +410,12 @@ section h3 {
     padding-right: 0;
   }
 
-  .section-heading-row {
-    align-items: stretch;
-    flex-direction: column;
+  .app-header-actions {
+    align-items: flex-start;
   }
 
-  .btn-reset-counts {
-    align-self: flex-end;
+  .btn-reset-all {
+    min-height: 32px;
   }
 
   .count-row--partial .count-label {
