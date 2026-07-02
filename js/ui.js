@@ -248,28 +248,35 @@
     render();
   }
 
-  function getDynamicRoundingUnits(totalBill) {
-    var maxUnit = 1;
-    if (totalBill >= 1000) {
-      maxUnit = 100;
-    } else if (totalBill >= 100) {
-      maxUnit = 10;
-    }
-    return [1, 10, 100].filter(function (unit) {
-      return unit <= maxUnit;
+  function getPayerCount() {
+    var total = 0;
+    ['drink', 'no_drink', 'partial'].forEach(function (category) {
+      var counts = state.categoryGenderCounts[category] || {};
+      total += (Number(counts.male) || 0) + (Number(counts.female) || 0);
     });
+    ['drink', 'no_drink'].forEach(function (category) {
+      ['male', 'female'].forEach(function (gender) {
+        if (state.partialParticipation[category][gender]) {
+          total += Number(state.partialCounts[category][gender]) || 0;
+        }
+      });
+    });
+    return total;
   }
 
   function updateRoundingUnitOptions() {
     var select = document.getElementById('select-rounding-unit');
-    var units = getDynamicRoundingUnits(state.totalBill);
+    var units = calc.getDynamicRoundingUnits(state.totalBill, getPayerCount());
+    var roundingUnitChanged = false;
     Array.prototype.forEach.call(select.options, function (option) {
       if (option.value === 'custom') return;
       option.hidden = units.indexOf(Number(option.value)) === -1;
     });
     if (state.roundingUnit !== 'custom' && units.indexOf(Number(state.roundingUnit)) === -1) {
       state.roundingUnit = units[units.length - 1];
+      roundingUnitChanged = true;
     }
+    return roundingUnitChanged;
   }
 
   function syncRoundingUnitControls() {
@@ -474,7 +481,9 @@
   }
 
   function render() {
-    updateRoundingUnitOptions();
+    if (updateRoundingUnitOptions()) {
+      syncRoundingUnitControls();
+    }
     var activeRoundingUnit = getActiveRoundingUnit();
     var calculationCounts = buildCalculationCounts();
     var groups = calc.resolveGroups(state.genderMode, calculationCounts, state.modeConfigs[state.genderMode]);

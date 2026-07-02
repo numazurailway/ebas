@@ -50,10 +50,33 @@
   };
 
   // ---- 端数処理定数 ----
-  var ROUNDING_UNIT = { YEN_1: 1, YEN_10: 10, YEN_100: 100 };
+  var ROUNDING_UNIT = { YEN_1: 1, YEN_10: 10, YEN_100: 100, YEN_500: 500, YEN_1000: 1000, YEN_5000: 5000, YEN_10000: 10000 };
   var ROUNDING_METHOD = { UP: 'up', DOWN: 'down', NEAREST: 'nearest' };
   var DEFAULT_ROUNDING_UNIT = ROUNDING_UNIT.YEN_10;
   var DEFAULT_ROUNDING_METHOD = ROUNDING_METHOD.NEAREST;
+
+
+  /**
+   * 精算対象金額と負担対象人数から表示可能な端数処理単位を返す。
+   * 金額単体では精算対象金額の1/10以下となる一般的な円単位を候補にし、
+   * 負担対象人数がいる場合は1人あたりの金額が粗くなりすぎないよう上限を抑える。
+   * @param {number} totalBill
+   * @param {number} [payerCount]
+   * @returns {Array<number>}
+   */
+  function getDynamicRoundingUnits(totalBill, payerCount) {
+    var availableUnits = [1, 10, 100, 500, 1000, 5000, 10000];
+    var bill = Math.max(0, Number(totalBill) || 0);
+    var maxAmount = bill / 10;
+    var count = Math.max(0, Number(payerCount) || 0);
+    if (count > 0) {
+      maxAmount = Math.min(maxAmount, bill / (count * 8));
+    }
+
+    return availableUnits.filter(function (unit) {
+      return unit <= Math.max(1, maxAmount);
+    });
+  }
 
   /**
    * 指定した単位・方式で金額を丸める。
@@ -311,6 +334,7 @@
     ROUNDING_METHOD: ROUNDING_METHOD,
     DEFAULT_ROUNDING_UNIT: DEFAULT_ROUNDING_UNIT,
     DEFAULT_ROUNDING_METHOD: DEFAULT_ROUNDING_METHOD,
+    getDynamicRoundingUnits: getDynamicRoundingUnits,
     roundAmount: roundAmount,
     resolveGroupsModeA: resolveGroupsModeA,
     resolveGroupsModeB: resolveGroupsModeB,
