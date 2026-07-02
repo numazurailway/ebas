@@ -8,7 +8,10 @@
 </head>
 <body>
 <header class="app-header">
-  <img src="assets/logo.svg" alt="会社ロゴ" class="app-logo">
+  <picture class="app-logo-wrap">
+    <source media="(max-width: 767px)" srcset="assets/icon.svg">
+    <img src="assets/logo.svg" alt="会社ロゴ" class="app-logo">
+  </picture>
   <div class="app-title">
     <span class="app-title-abbr">EBAS</span>
     <span class="app-title-full">イベント費用賦課額算定システム</span>
@@ -77,12 +80,12 @@
         <button type="button" class="btn-increment" aria-label="途中参加・女性の人数を増やす">＋</button>
       </div>
     </div>
-    <div class="count-row" data-category="absent">
-      <span class="count-label">不参加・なし（支払いなし）</span>
+    <div class="count-row" data-category="no_charge">
+      <span class="count-label">無賃扱い</span>
       <div class="counter">
-        <button type="button" class="btn-decrement" aria-label="不参加・なしの人数を減らす">−</button>
+        <button type="button" class="btn-decrement" aria-label="無賃扱いの人数を減らす">−</button>
         <span class="count-value" data-role="count-display">0</span>
-        <button type="button" class="btn-increment" aria-label="不参加・なしの人数を増やす">＋</button>
+        <button type="button" class="btn-increment" aria-label="無賃扱いの人数を増やす">＋</button>
       </div>
     </div>
   </section>
@@ -153,15 +156,17 @@
       <select id="select-rounding-unit">
         <option value="1">1円</option>
         <option value="10">10円</option>
-        <option value="100" selected>100円</option>
+        <option value="100">100円</option>
+        <option value="custom">処理単位指定</option>
       </select>
+      <input type="number" id="input-custom-rounding-unit" class="custom-rounding-unit" inputmode="numeric" min="1" step="1" value="500" aria-label="手動指定する端数処理単位（円）" hidden>
     </div>
     <div class="form-row">
       <label for="select-rounding-method">丸め方</label>
       <select id="select-rounding-method">
-        <option value="up" selected>切り上げ</option>
+        <option value="up">切り上げ</option>
         <option value="down">切り捨て</option>
-        <option value="nearest">四捨五入</option>
+        <option value="nearest" selected>四捨五入</option>
       </select>
     </div>
   </section>

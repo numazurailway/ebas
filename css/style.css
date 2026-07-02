@@ -1,6 +1,8 @@
 :root {
   --color-navy-900: #1a2942;
   --color-navy-700: #2c3e5c;
+  --color-header-start: #f8fbff;
+  --color-header-end: #e8f0fb;
   --color-gray-700: #4a4f57;
   --color-gray-300: #c9ccd1;
   --color-gray-100: #f2f3f5;
@@ -17,7 +19,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", "BIZ UDPゴシック", "Noto Sans CJK JP", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
   color: var(--color-gray-700);
   background: var(--color-gray-100);
   line-height: 1.6;
@@ -32,14 +34,24 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: var(--color-navy-900);
-  color: var(--color-white);
+  background: linear-gradient(135deg, var(--color-header-start), var(--color-header-end));
+  color: var(--color-navy-900);
   padding: 0.75rem 1rem;
+  border-bottom: 1px solid #c6d4ea;
+  box-shadow: 0 1px 4px rgba(26, 41, 66, 0.12);
+}
+
+.app-logo-wrap {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 .app-logo {
+  display: block;
   height: 40px;
   width: auto;
+  max-width: 180px;
   flex-shrink: 0;
 }
 
@@ -61,12 +73,12 @@ body {
 
 .app-title-en {
   font-size: 0.65rem;
-  color: var(--color-gray-300);
+  color: var(--color-navy-700);
 }
 
 .app-version {
   font-size: 0.75rem;
-  color: var(--color-gray-300);
+  color: var(--color-navy-700);
   align-self: flex-start;
 }
 
@@ -267,5 +279,32 @@ section h3 {
 @media (min-width: 768px) {
   #results-plans {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-header {
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .app-logo {
+    width: 36px;
+    height: 36px;
+    max-width: 36px;
+    object-fit: contain;
+  }
+
+  .app-title-abbr {
+    font-size: 1.05rem;
+  }
+
+  .app-title-full {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .app-title-en {
+    display: none;
   }
 }

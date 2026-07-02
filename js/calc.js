@@ -10,24 +10,24 @@
     DRINK: 'drink',
     NO_DRINK: 'no_drink',
     PARTIAL: 'partial',
-    ABSENT: 'absent',
+    NO_CHARGE: 'no_charge',
   };
 
   var CATEGORY_LABELS = {
     drink: 'アルコールあり',
     no_drink: 'アルコールなし',
     partial: '途中参加',
-    absent: '不参加・なし',
+    no_charge: '無賃扱い',
   };
 
-  var CATEGORY_ORDER = [CATEGORY.DRINK, CATEGORY.NO_DRINK, CATEGORY.PARTIAL, CATEGORY.ABSENT];
+  var CATEGORY_ORDER = [CATEGORY.DRINK, CATEGORY.NO_DRINK, CATEGORY.PARTIAL, CATEGORY.NO_CHARGE];
 
   // カテゴリごとの基本重み（性別調整前）
   var BASE_CATEGORY_WEIGHT = {
     drink: 1.0,
     no_drink: 0.8,
     partial: 0.5,
-    absent: 0.0,
+    no_charge: 0.0,
   };
 
   var GENDER_LABELS = { male: '男性', female: '女性' };
@@ -52,8 +52,8 @@
   // ---- 端数処理定数 ----
   var ROUNDING_UNIT = { YEN_1: 1, YEN_10: 10, YEN_100: 100 };
   var ROUNDING_METHOD = { UP: 'up', DOWN: 'down', NEAREST: 'nearest' };
-  var DEFAULT_ROUNDING_UNIT = ROUNDING_UNIT.YEN_100;
-  var DEFAULT_ROUNDING_METHOD = ROUNDING_METHOD.UP;
+  var DEFAULT_ROUNDING_UNIT = ROUNDING_UNIT.YEN_10;
+  var DEFAULT_ROUNDING_METHOD = ROUNDING_METHOD.NEAREST;
 
   /**
    * 指定した単位・方式で金額を丸める。
@@ -110,11 +110,11 @@
     return groups;
   }
 
-  function buildAbsentGroup(categoryGenderCounts) {
+  function buildNoChargeGroup(categoryGenderCounts) {
     return {
-      id: 'absent',
-      label: CATEGORY_LABELS.absent,
-      count: categoryGenderCounts.absent || 0,
+      id: CATEGORY.NO_CHARGE,
+      label: CATEGORY_LABELS.no_charge,
+      count: categoryGenderCounts.no_charge || 0,
       weight: 0,
     };
   }
@@ -127,7 +127,7 @@
     var multiplier = { male: 1, female: 1 };
     multiplier[cfg.discountedGender] = 1 - cfg.discountRate;
     var groups = buildCategoryGenderGroups(categoryGenderCounts, multiplier);
-    groups.push(buildAbsentGroup(categoryGenderCounts));
+    groups.push(buildNoChargeGroup(categoryGenderCounts));
     return groups;
   }
 
@@ -138,7 +138,7 @@
     var cfg = fixedWeightConfig || DEFAULT_FIXED_GENDER_WEIGHT;
     var multiplier = { male: cfg.maleWeight, female: cfg.femaleWeight };
     var groups = buildCategoryGenderGroups(categoryGenderCounts, multiplier);
-    groups.push(buildAbsentGroup(categoryGenderCounts));
+    groups.push(buildNoChargeGroup(categoryGenderCounts));
     return groups;
   }
 
@@ -164,7 +164,7 @@
         });
       }
     }
-    groups.push(buildAbsentGroup(categoryGenderCounts));
+    groups.push(buildNoChargeGroup(categoryGenderCounts));
     return groups;
   }
 

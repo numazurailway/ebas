@@ -16,7 +16,7 @@
       drink: { male: 0, female: 0 },
       no_drink: { male: 0, female: 0 },
       partial: { male: 0, female: 0 },
-      absent: 0,
+      no_charge: 0,
     },
     genderMode: calc.GENDER_MODE.DISCOUNT,
     modeConfigs: {
@@ -25,6 +25,7 @@
       matrix: deepCopyMatrix(calc.DEFAULT_CATEGORY_GENDER_MATRIX),
     },
     roundingUnit: calc.DEFAULT_ROUNDING_UNIT,
+    customRoundingUnit: 500,
     roundingMethod: calc.DEFAULT_ROUNDING_METHOD,
   };
 
@@ -48,6 +49,16 @@
     return { weights: weights };
   }
 
+  function normalizeCategoryGenderCounts(counts) {
+    var normalized = {
+      drink: counts.drink || { male: 0, female: 0 },
+      no_drink: counts.no_drink || { male: 0, female: 0 },
+      partial: counts.partial || { male: 0, female: 0 },
+      no_charge: counts.no_charge || counts.absent || 0,
+    };
+    return normalized;
+  }
+
   // ---- localStorage 永続化 ----
 
   function persistState() {
@@ -65,10 +76,11 @@
       var saved = JSON.parse(raw);
       if (!saved || typeof saved !== 'object') return;
       if (typeof saved.totalBill === 'number') state.totalBill = saved.totalBill;
-      if (saved.categoryGenderCounts) state.categoryGenderCounts = saved.categoryGenderCounts;
+      if (saved.categoryGenderCounts) state.categoryGenderCounts = normalizeCategoryGenderCounts(saved.categoryGenderCounts);
       if (saved.genderMode) state.genderMode = saved.genderMode;
       if (saved.modeConfigs) state.modeConfigs = saved.modeConfigs;
       if (saved.roundingUnit) state.roundingUnit = saved.roundingUnit;
+      if (saved.customRoundingUnit) state.customRoundingUnit = saved.customRoundingUnit;
       if (saved.roundingMethod) state.roundingMethod = saved.roundingMethod;
     } catch (e) {
       // 保存データが壊れている場合はデフォルト状態のまま続行する
@@ -103,7 +115,8 @@
       input.value = state.modeConfigs.matrix.weights[category][gender];
     });
 
-    document.getElementById('select-rounding-unit').value = state.roundingUnit;
+    updateRoundingUnitOptions();
+    syncRoundingUnitControls();
     document.getElementById('select-rounding-method').value = state.roundingMethod;
   }
 
@@ -131,9 +144,47 @@
     render();
   }
 
+  function getDynamicRoundingUnits(totalBill) {
+    var maxUnit = 1;
+    if (totalBill >= 1000) {
+      maxUnit = 100;
+    } else if (totalBill >= 100) {
+      maxUnit = 10;
+    }
+    return [1, 10, 100].filter(function (unit) {
+      return unit <= maxUnit;
+    });
+  }
+
+  function updateRoundingUnitOptions() {
+    var select = document.getElementById('select-rounding-unit');
+    var units = getDynamicRoundingUnits(state.totalBill);
+    Array.prototype.forEach.call(select.options, function (option) {
+      if (option.value === 'custom') return;
+      option.hidden = units.indexOf(Number(option.value)) === -1;
+    });
+    if (state.roundingUnit !== 'custom' && units.indexOf(Number(state.roundingUnit)) === -1) {
+      state.roundingUnit = units[units.length - 1];
+    }
+  }
+
+  function syncRoundingUnitControls() {
+    var select = document.getElementById('select-rounding-unit');
+    var customInput = document.getElementById('input-custom-rounding-unit');
+    select.value = state.roundingUnit === 'custom' ? 'custom' : String(state.roundingUnit);
+    customInput.hidden = state.roundingUnit !== 'custom';
+    customInput.value = state.customRoundingUnit;
+  }
+
+  function getActiveRoundingUnit() {
+    return state.roundingUnit === 'custom' ? Math.max(1, Number(state.customRoundingUnit) || 1) : Number(state.roundingUnit);
+  }
+
   function wireEvents() {
     document.getElementById('input-total-bill').addEventListener('input', function (e) {
       state.totalBill = Number(e.target.value) || 0;
+      updateRoundingUnitOptions();
+      syncRoundingUnitControls();
       render();
     });
 
@@ -181,7 +232,17 @@
     });
 
     document.getElementById('select-rounding-unit').addEventListener('change', function (e) {
-      state.roundingUnit = Number(e.target.value);
+      if (e.target.value === 'custom') {
+        alert('指令に許可を得ましたか？');
+        state.roundingUnit = 'custom';
+      } else {
+        state.roundingUnit = Number(e.target.value);
+      }
+      syncRoundingUnitControls();
+      render();
+    });
+    document.getElementById('input-custom-rounding-unit').addEventListener('input', function (e) {
+      state.customRoundingUnit = Math.max(1, Number(e.target.value) || 1);
       render();
     });
     document.getElementById('select-rounding-method').addEventListener('change', function (e) {
@@ -260,14 +321,16 @@
   }
 
   function render() {
+    updateRoundingUnitOptions();
+    var activeRoundingUnit = getActiveRoundingUnit();
     var groups = calc.resolveGroups(state.genderMode, state.categoryGenderCounts, state.modeConfigs[state.genderMode]);
-    var currentResult = calc.calculateSplit(groups, state.totalBill, state.roundingUnit, state.roundingMethod);
+    var currentResult = calc.calculateSplit(groups, state.totalBill, activeRoundingUnit, state.roundingMethod);
 
     var currentContainer = document.getElementById('results-current');
     currentContainer.innerHTML = '';
     currentContainer.appendChild(buildResultTable('現在の設定', currentResult));
 
-    var plans = plansModule.generateComparisonPlans(state.categoryGenderCounts, state.totalBill, state.roundingUnit, state.roundingMethod);
+    var plans = plansModule.generateComparisonPlans(state.categoryGenderCounts, state.totalBill, activeRoundingUnit, state.roundingMethod);
     var plansContainer = document.getElementById('results-plans');
     plansContainer.innerHTML = '';
     plans.forEach(function (plan) {
@@ -318,7 +381,7 @@
       drink: { male: 3, female: 2 },
       no_drink: { male: 1, female: 1 },
       partial: { male: 1, female: 0 },
-      absent: 1,
+      no_charge: 1,
     };
     var plans = plansModule.generateComparisonPlans(counts, 50000, 100, 'up');
     plans.forEach(function (plan) {
