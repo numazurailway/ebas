@@ -432,7 +432,7 @@
 
     var verify = document.createElement('p');
     verify.className = 'result-verify';
-    verify.textContent = '過不足: ' + formatYen(splitResult.discrepancy) + '（0円であれば全体会計と一致）';
+    verify.textContent = '過不足: ' + formatYen(splitResult.discrepancy);
     wrapper.appendChild(verify);
 
     return wrapper;
