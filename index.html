@@ -10,7 +10,7 @@
 <header class="app-header">
   <picture class="app-logo-wrap">
     <source media="(max-width: 767px)" srcset="assets/icon.svg">
-    <img src="assets/logo.svg" alt="会社ロゴ" class="app-logo">
+    <img src="assets/logo.svg" alt="NURロゴ" class="app-logo">
   </picture>
   <div class="app-title">
     <span class="app-title-abbr">EBAS</span>
@@ -91,8 +91,8 @@
   </section>
 
   <section id="section-gender-mode" aria-labelledby="section-gender-mode-heading">
-    <h2 id="section-gender-mode-heading">3. 性別調整方式</h2>
-    <div class="mode-selector" role="radiogroup" aria-label="性別調整方式の選択">
+    <h2 id="section-gender-mode-heading">3. 調整方式</h2>
+    <div class="mode-selector" role="radiogroup" aria-label="調整方式の選択">
       <label><input type="radio" name="gender-mode" value="discount" checked> 方式A：割引率</label>
       <label><input type="radio" name="gender-mode" value="fixed_weight"> 方式B：性別固定重み</label>
       <label><input type="radio" name="gender-mode" value="matrix"> 方式C：カテゴリ×性別</label>
@@ -162,7 +162,7 @@
       <input type="number" id="input-custom-rounding-unit" class="custom-rounding-unit" inputmode="numeric" min="1" step="1" value="500" aria-label="手動指定する端数処理単位（円）" hidden>
     </div>
     <div class="form-row">
-      <label for="select-rounding-method">丸め方</label>
+      <label for="select-rounding-method">端数処理方法</label>
       <select id="select-rounding-method">
         <option value="up">切り上げ</option>
         <option value="down">切り捨て</option>
