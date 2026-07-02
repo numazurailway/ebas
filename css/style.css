@@ -1,0 +1,271 @@
+:root {
+  --color-navy-900: #1a2942;
+  --color-navy-700: #2c3e5c;
+  --color-gray-700: #4a4f57;
+  --color-gray-300: #c9ccd1;
+  --color-gray-100: #f2f3f5;
+  --color-white: #ffffff;
+  --color-accent: #375a8c;
+  --color-error: #a33b3b;
+  --radius-sm: 2px;
+  --tap-target-min: 44px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  color: var(--color-gray-700);
+  background: var(--color-gray-100);
+  line-height: 1.6;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+  padding: 0.75rem 1rem;
+}
+
+.app-logo {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.app-title {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.app-title-abbr {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.app-title-full {
+  font-size: 0.85rem;
+}
+
+.app-title-en {
+  font-size: 0.65rem;
+  color: var(--color-gray-300);
+}
+
+.app-version {
+  font-size: 0.75rem;
+  color: var(--color-gray-300);
+  align-self: flex-start;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+section {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+section h2 {
+  margin-top: 0;
+  font-size: 1rem;
+  color: var(--color-navy-900);
+  border-bottom: 1px solid var(--color-gray-300);
+  padding-bottom: 0.5rem;
+}
+
+section h3 {
+  font-size: 0.95rem;
+  color: var(--color-navy-700);
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  flex-wrap: wrap;
+}
+
+.form-row label {
+  font-size: 0.9rem;
+}
+
+.form-row input[type="number"],
+.form-row select {
+  min-height: var(--tap-target-min);
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  max-width: 10rem;
+}
+
+.count-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.count-row:last-child {
+  border-bottom: none;
+}
+
+.count-label {
+  font-size: 0.9rem;
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-decrement,
+.btn-increment {
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  border: 1px solid var(--color-gray-300);
+  background: var(--color-white);
+  color: var(--color-navy-900);
+  font-size: 1.25rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-decrement:hover,
+.btn-increment:hover {
+  background: var(--color-gray-100);
+}
+
+.count-value {
+  min-width: 2rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.mode-selector label {
+  font-size: 0.9rem;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.matrix-table th,
+.matrix-table td {
+  border: 1px solid var(--color-gray-300);
+  padding: 0.4rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.matrix-table input {
+  width: 4.5rem;
+  min-height: var(--tap-target-min);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+#results-plans {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.result-block {
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+
+.result-block h4 {
+  margin-top: 0;
+  color: var(--color-navy-700);
+  font-size: 0.9rem;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.result-table th,
+.result-table td {
+  border: 1px solid var(--color-gray-300);
+  padding: 0.4rem;
+  text-align: right;
+}
+
+.result-table th:first-child,
+.result-table td:first-child {
+  text-align: left;
+}
+
+.result-table tbody tr:nth-child(even) {
+  background: var(--color-gray-100);
+}
+
+.result-table tfoot td {
+  font-weight: 700;
+  background: var(--color-gray-100);
+}
+
+.result-note {
+  font-size: 0.8rem;
+  color: var(--color-navy-700);
+}
+
+.result-verify {
+  font-size: 0.8rem;
+}
+
+.result-error {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.app-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-gray-700);
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  #results-plans {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

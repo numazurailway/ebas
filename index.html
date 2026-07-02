@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EBAS - イベント費用賦課額算定システム</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="app-header">
+  <img src="assets/logo.svg" alt="会社ロゴ" class="app-logo">
+  <div class="app-title">
+    <span class="app-title-abbr">EBAS</span>
+    <span class="app-title-full">イベント費用賦課額算定システム</span>
+    <span class="app-title-en">Event Bill Assessment System</span>
+  </div>
+  <span class="app-version">v1.0</span>
+</header>
+
+<main>
+  <section id="section-bill" aria-labelledby="section-bill-heading">
+    <h2 id="section-bill-heading">1. 全体会計金額</h2>
+    <div class="form-row">
+      <label for="input-total-bill">会計金額（円）</label>
+      <input type="number" id="input-total-bill" inputmode="numeric" min="0" step="1" value="0">
+    </div>
+  </section>
+
+  <section id="section-counts" aria-labelledby="section-counts-heading">
+    <h2 id="section-counts-heading">2. 参加者数（カテゴリ・性別）</h2>
+
+    <div class="count-row" data-category="drink" data-gender="male">
+      <span class="count-label">アルコールあり・男性</span>
+      <div class="counter">
+        <button type="button" class="btn-decrement" aria-label="アルコールあり・男性の人数を減らす">−</button>
+        <span class="count-value" data-role="count-display">0</span>
+        <button type="button" class="btn-increment" aria-label="アルコールあり・男性の人数を増やす">＋</button>
+      </div>
+    </div>
+    <div class="count-row" data-category="drink" data-gender="female">
+      <span class="count-label">アルコールあり・女性</span>
+      <div class="counter">
+        <button type="button" class="btn-decrement" aria-label="アルコールあり・女性の人数を減らす">−</button>
+        <span class="count-value" data-role="count-display">0</span>
+        <button type="button" class="btn-increment" aria-label="アルコールあり・女性の人数を増やす">＋</button>
+      </div>
+    </div>
+    <div class="count-row" data-category="no_drink" data-gender="male">
+      <span class="count-label">アルコールなし・男性</span>
+      <div class="counter">
+        <button type="button" class="btn-decrement" aria-label="アルコールなし・男性の人数を減らす">−</button>
+        <span class="count-value" data-role="count-display">0</span>
+        <button type="button" class="btn-increment" aria-label="アルコールなし・男性の人数を増やす">＋</button>
+      </div>
+    </div>
+    <div class="count-row" data-category="no_drink" data-gender="female">
+      <span class="count-label">アルコールなし・女性</span>
+      <div class="counter">
+        <button type="button" class="btn-decrement" aria-label="アルコールなし・女性の人数を減らす">−</button>
+        <span class="count-value" data-role="count-display">0</span>
+        <button type="button" class="btn-increment" aria-label="アルコールなし・女性の人数を増やす">＋</button>
+      </div>
+    </div>
+    <div class="count-row" data-category="partial" data-gender="male">
+      <span class="count-label">途中参加・男性</span>
+      <div class="counter">
+        <button type="button" class="btn-decrement" aria-label="途中参加・男性の人数を減らす">−</button>
+        <span class="count-value" data-role="count-display">0</span>
+        <button type="button" class="btn-increment" aria-label="途中参加・男性の人数を増やす">＋</button>
+      </div>
+    </div>
+    <div class="count-row" data-category="partial" data-gender="female">
+      <span class="count-label">途中参加・女性</span>
+      <div class="counter">
+        <button type="button" class="btn-decrement" aria-label="途中参加・女性の人数を減らす">−</button>
+        <span class="count-value" data-role="count-display">0</span>
+        <button type="button" class="btn-increment" aria-label="途中参加・女性の人数を増やす">＋</button>
+      </div>
+    </div>
+    <div class="count-row" data-category="absent">
+      <span class="count-label">不参加・なし（支払いなし）</span>
+      <div class="counter">
+        <button type="button" class="btn-decrement" aria-label="不参加・なしの人数を減らす">−</button>
+        <span class="count-value" data-role="count-display">0</span>
+        <button type="button" class="btn-increment" aria-label="不参加・なしの人数を増やす">＋</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="section-gender-mode" aria-labelledby="section-gender-mode-heading">
+    <h2 id="section-gender-mode-heading">3. 性別調整方式</h2>
+    <div class="mode-selector" role="radiogroup" aria-label="性別調整方式の選択">
+      <label><input type="radio" name="gender-mode" value="discount" checked> 方式A：割引率</label>
+      <label><input type="radio" name="gender-mode" value="fixed_weight"> 方式B：性別固定重み</label>
+      <label><input type="radio" name="gender-mode" value="matrix"> 方式C：カテゴリ×性別</label>
+    </div>
+
+    <div id="mode-config-discount" class="mode-config">
+      <div class="form-row">
+        <label for="discount-gender">割引対象の性別</label>
+        <select id="discount-gender">
+          <option value="female" selected>女性</option>
+          <option value="male">男性</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="discount-rate">割引率（％）</label>
+        <input type="number" id="discount-rate" min="0" max="100" step="1" value="20">
+      </div>
+    </div>
+
+    <div id="mode-config-fixed_weight" class="mode-config" hidden>
+      <div class="form-row">
+        <label for="fixed-weight-male">男性の重み</label>
+        <input type="number" id="fixed-weight-male" min="0" step="0.1" value="1.0">
+      </div>
+      <div class="form-row">
+        <label for="fixed-weight-female">女性の重み</label>
+        <input type="number" id="fixed-weight-female" min="0" step="0.1" value="0.7">
+      </div>
+    </div>
+
+    <div id="mode-config-matrix" class="mode-config" hidden>
+      <table class="matrix-table">
+        <thead>
+          <tr><th scope="col">カテゴリ</th><th scope="col">男性</th><th scope="col">女性</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">アルコールあり</th>
+            <td><input type="number" class="matrix-weight" data-category="drink" data-gender="male" min="0" step="0.1" value="1.0"></td>
+            <td><input type="number" class="matrix-weight" data-category="drink" data-gender="female" min="0" step="0.1" value="0.8"></td>
+          </tr>
+          <tr>
+            <th scope="row">アルコールなし</th>
+            <td><input type="number" class="matrix-weight" data-category="no_drink" data-gender="male" min="0" step="0.1" value="0.8"></td>
+            <td><input type="number" class="matrix-weight" data-category="no_drink" data-gender="female" min="0" step="0.1" value="0.6"></td>
+          </tr>
+          <tr>
+            <th scope="row">途中参加</th>
+            <td><input type="number" class="matrix-weight" data-category="partial" data-gender="male" min="0" step="0.1" value="0.5"></td>
+            <td><input type="number" class="matrix-weight" data-category="partial" data-gender="female" min="0" step="0.1" value="0.4"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="section-rounding" aria-labelledby="section-rounding-heading">
+    <h2 id="section-rounding-heading">4. 端数処理</h2>
+    <div class="form-row">
+      <label for="select-rounding-unit">単位</label>
+      <select id="select-rounding-unit">
+        <option value="1">1円</option>
+        <option value="10">10円</option>
+        <option value="100" selected>100円</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="select-rounding-method">丸め方</label>
+      <select id="select-rounding-method">
+        <option value="up" selected>切り上げ</option>
+        <option value="down">切り捨て</option>
+        <option value="nearest">四捨五入</option>
+      </select>
+    </div>
+  </section>
+
+  <section id="section-results" aria-labelledby="section-results-heading">
+    <h2 id="section-results-heading">5. 算定結果</h2>
+    <h3>現在の設定</h3>
+    <div id="results-current"></div>
+    <h3>比較案</h3>
+    <div id="results-plans"></div>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <p>本システムはブラウザ内でのみ動作し、入力データは外部送信されません。</p>
+</footer>
+
+<script src="js/calc.js"></script>
+<script src="js/plans.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
