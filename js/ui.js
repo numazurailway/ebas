@@ -18,6 +18,10 @@
       partial: { male: 0, female: 0 },
       no_charge: 0,
     },
+    partialParticipation: {
+      drink: { male: false, female: false },
+      no_drink: { male: false, female: false },
+    },
     genderMode: calc.GENDER_MODE.DISCOUNT,
     modeConfigs: {
       discount: shallowCopy(calc.DEFAULT_DISCOUNT_CONFIG),
@@ -51,12 +55,35 @@
 
   function normalizeCategoryGenderCounts(counts) {
     var normalized = {
-      drink: counts.drink || { male: 0, female: 0 },
-      no_drink: counts.no_drink || { male: 0, female: 0 },
-      partial: counts.partial || { male: 0, female: 0 },
+      drink: {
+        male: (counts.drink && counts.drink.male) || 0,
+        female: (counts.drink && counts.drink.female) || 0,
+      },
+      no_drink: {
+        male: (counts.no_drink && counts.no_drink.male) || 0,
+        female: (counts.no_drink && counts.no_drink.female) || 0,
+      },
+      partial: {
+        male: (counts.partial && counts.partial.male) || 0,
+        female: (counts.partial && counts.partial.female) || 0,
+      },
       no_charge: counts.no_charge || counts.absent || 0,
     };
     return normalized;
+  }
+
+  function normalizePartialParticipation(flags) {
+    flags = flags || {};
+    return {
+      drink: {
+        male: Boolean(flags.drink && flags.drink.male),
+        female: Boolean(flags.drink && flags.drink.female),
+      },
+      no_drink: {
+        male: Boolean(flags.no_drink && flags.no_drink.male),
+        female: Boolean(flags.no_drink && flags.no_drink.female),
+      },
+    };
   }
 
   // ---- localStorage 永続化 ----
@@ -77,6 +104,7 @@
       if (!saved || typeof saved !== 'object') return;
       if (typeof saved.totalBill === 'number') state.totalBill = saved.totalBill;
       if (saved.categoryGenderCounts) state.categoryGenderCounts = normalizeCategoryGenderCounts(saved.categoryGenderCounts);
+      if (saved.partialParticipation) state.partialParticipation = normalizePartialParticipation(saved.partialParticipation);
       if (saved.genderMode) state.genderMode = saved.genderMode;
       if (saved.modeConfigs) state.modeConfigs = saved.modeConfigs;
       if (saved.roundingUnit) state.roundingUnit = saved.roundingUnit;
@@ -97,7 +125,9 @@
       var gender = row.dataset.gender;
       var display = row.querySelector('[data-role="count-display"]');
       var value = gender ? state.categoryGenderCounts[category][gender] : state.categoryGenderCounts[category];
+      var partialToggle = row.querySelector('[data-role="partial-toggle"]');
       display.textContent = value;
+      if (partialToggle) partialToggle.checked = Boolean(state.partialParticipation[category][gender]);
     });
 
     document.querySelector('input[name="gender-mode"][value="' + state.genderMode + '"]').checked = true;
@@ -180,6 +210,37 @@
     return state.roundingUnit === 'custom' ? Math.max(1, Number(state.customRoundingUnit) || 1) : Number(state.roundingUnit);
   }
 
+  function buildCalculationCounts() {
+    var calculationCounts = normalizeCategoryGenderCounts(state.categoryGenderCounts);
+    calculationCounts.partialDetails = [];
+    ['drink', 'no_drink'].forEach(function (category) {
+      ['male', 'female'].forEach(function (gender) {
+        if (!state.partialParticipation[category][gender]) return;
+        var count = calculationCounts[category][gender] || 0;
+        if (count <= 0) return;
+        calculationCounts[category][gender] = 0;
+        calculationCounts.partialDetails.push({ category: category, gender: gender, count: count });
+      });
+    });
+    return calculationCounts;
+  }
+
+  function openCommanderConfirmDialog(onDecision) {
+    var dialog = document.getElementById('commander-confirm-dialog');
+    if (!dialog || typeof dialog.showModal !== 'function') {
+      onDecision(window.confirm('手動指定の端数処理単位を使用します。司令に確認しましたか？'));
+      return;
+    }
+
+    function handleClose() {
+      dialog.removeEventListener('close', handleClose);
+      onDecision(dialog.returnValue === 'yes');
+    }
+
+    dialog.addEventListener('close', handleClose);
+    dialog.showModal();
+  }
+
   function wireEvents() {
     document.getElementById('input-total-bill').addEventListener('input', function (e) {
       state.totalBill = Number(e.target.value) || 0;
@@ -198,6 +259,13 @@
       row.querySelector('.btn-increment').addEventListener('click', function () {
         handleCountChange(category, gender, 1, displayEl);
       });
+      var partialToggle = row.querySelector('[data-role="partial-toggle"]');
+      if (partialToggle) {
+        partialToggle.addEventListener('change', function (e) {
+          state.partialParticipation[category][gender] = e.target.checked;
+          render();
+        });
+      }
     });
 
     document.querySelectorAll('input[name="gender-mode"]').forEach(function (radio) {
@@ -233,11 +301,17 @@
 
     document.getElementById('select-rounding-unit').addEventListener('change', function (e) {
       if (e.target.value === 'custom') {
-        alert('指令に許可を得ましたか？');
-        state.roundingUnit = 'custom';
-      } else {
-        state.roundingUnit = Number(e.target.value);
+        openCommanderConfirmDialog(function (approved) {
+          if (approved) {
+            state.roundingUnit = 'custom';
+          }
+          syncRoundingUnitControls();
+          render();
+        });
+        syncRoundingUnitControls();
+        return;
       }
+      state.roundingUnit = Number(e.target.value);
       syncRoundingUnitControls();
       render();
     });
@@ -323,14 +397,15 @@
   function render() {
     updateRoundingUnitOptions();
     var activeRoundingUnit = getActiveRoundingUnit();
-    var groups = calc.resolveGroups(state.genderMode, state.categoryGenderCounts, state.modeConfigs[state.genderMode]);
+    var calculationCounts = buildCalculationCounts();
+    var groups = calc.resolveGroups(state.genderMode, calculationCounts, state.modeConfigs[state.genderMode]);
     var currentResult = calc.calculateSplit(groups, state.totalBill, activeRoundingUnit, state.roundingMethod);
 
     var currentContainer = document.getElementById('results-current');
     currentContainer.innerHTML = '';
     currentContainer.appendChild(buildResultTable('現在の設定', currentResult));
 
-    var plans = plansModule.generateComparisonPlans(state.categoryGenderCounts, state.totalBill, activeRoundingUnit, state.roundingMethod);
+    var plans = plansModule.generateComparisonPlans(calculationCounts, state.totalBill, activeRoundingUnit, state.roundingMethod);
     var plansContainer = document.getElementById('results-plans');
     plansContainer.innerHTML = '';
     plans.forEach(function (plan) {

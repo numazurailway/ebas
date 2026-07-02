@@ -146,6 +146,18 @@ section h3 {
 
 .count-label {
   font-size: 0.9rem;
+  flex: 1 1 auto;
+}
+
+.partial-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: var(--tap-target-min);
+  padding: 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-navy-700);
+  white-space: nowrap;
 }
 
 .counter {
@@ -269,6 +281,56 @@ section h3 {
   font-weight: 600;
 }
 
+.confirm-dialog {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  max-width: min(90vw, 24rem);
+  color: var(--color-gray-700);
+  box-shadow: 0 12px 32px rgba(26, 41, 66, 0.28);
+}
+
+.confirm-dialog::backdrop {
+  background: rgba(26, 41, 66, 0.45);
+}
+
+.confirm-dialog__panel {
+  padding: 1.25rem;
+}
+
+.confirm-dialog__panel h2 {
+  margin: 0 0 0.5rem;
+  color: var(--color-navy-900);
+  font-size: 1.05rem;
+}
+
+.confirm-dialog__panel p {
+  margin: 0 0 1rem;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.confirm-dialog__button {
+  min-width: 5rem;
+  min-height: var(--tap-target-min);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-navy-900);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.confirm-dialog__button--primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-white);
+}
+
 .app-footer {
   text-align: center;
   font-size: 0.75rem;
@@ -302,6 +364,19 @@ section h3 {
   .app-title-full {
     font-size: 0.78rem;
     line-height: 1.35;
+  }
+
+  .count-row {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .partial-toggle {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-end;
+    min-height: 32px;
+    padding-right: 0;
   }
 
   .app-title-en {

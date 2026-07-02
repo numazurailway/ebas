@@ -34,6 +34,7 @@
 
     <div class="count-row" data-category="drink" data-gender="male">
       <span class="count-label">アルコールあり・男性</span>
+      <label class="partial-toggle"><input type="checkbox" data-role="partial-toggle"> 途中参加</label>
       <div class="counter">
         <button type="button" class="btn-decrement" aria-label="アルコールあり・男性の人数を減らす">−</button>
         <span class="count-value" data-role="count-display">0</span>
@@ -42,6 +43,7 @@
     </div>
     <div class="count-row" data-category="drink" data-gender="female">
       <span class="count-label">アルコールあり・女性</span>
+      <label class="partial-toggle"><input type="checkbox" data-role="partial-toggle"> 途中参加</label>
       <div class="counter">
         <button type="button" class="btn-decrement" aria-label="アルコールあり・女性の人数を減らす">−</button>
         <span class="count-value" data-role="count-display">0</span>
@@ -50,6 +52,7 @@
     </div>
     <div class="count-row" data-category="no_drink" data-gender="male">
       <span class="count-label">アルコールなし・男性</span>
+      <label class="partial-toggle"><input type="checkbox" data-role="partial-toggle"> 途中参加</label>
       <div class="counter">
         <button type="button" class="btn-decrement" aria-label="アルコールなし・男性の人数を減らす">−</button>
         <span class="count-value" data-role="count-display">0</span>
@@ -58,26 +61,11 @@
     </div>
     <div class="count-row" data-category="no_drink" data-gender="female">
       <span class="count-label">アルコールなし・女性</span>
+      <label class="partial-toggle"><input type="checkbox" data-role="partial-toggle"> 途中参加</label>
       <div class="counter">
         <button type="button" class="btn-decrement" aria-label="アルコールなし・女性の人数を減らす">−</button>
         <span class="count-value" data-role="count-display">0</span>
         <button type="button" class="btn-increment" aria-label="アルコールなし・女性の人数を増やす">＋</button>
-      </div>
-    </div>
-    <div class="count-row" data-category="partial" data-gender="male">
-      <span class="count-label">途中参加・男性</span>
-      <div class="counter">
-        <button type="button" class="btn-decrement" aria-label="途中参加・男性の人数を減らす">−</button>
-        <span class="count-value" data-role="count-display">0</span>
-        <button type="button" class="btn-increment" aria-label="途中参加・男性の人数を増やす">＋</button>
-      </div>
-    </div>
-    <div class="count-row" data-category="partial" data-gender="female">
-      <span class="count-label">途中参加・女性</span>
-      <div class="counter">
-        <button type="button" class="btn-decrement" aria-label="途中参加・女性の人数を減らす">−</button>
-        <span class="count-value" data-role="count-display">0</span>
-        <button type="button" class="btn-increment" aria-label="途中参加・女性の人数を増やす">＋</button>
       </div>
     </div>
     <div class="count-row" data-category="no_charge">
@@ -179,6 +167,17 @@
     <div id="results-plans"></div>
   </section>
 </main>
+
+<dialog id="commander-confirm-dialog" class="confirm-dialog" aria-labelledby="commander-confirm-title">
+  <form method="dialog" class="confirm-dialog__panel">
+    <h2 id="commander-confirm-title">司令に確認</h2>
+    <p>手動指定の端数処理単位を使用します。司令に確認しましたか？</p>
+    <div class="confirm-dialog__actions">
+      <button type="submit" value="yes" class="confirm-dialog__button confirm-dialog__button--primary">はい</button>
+      <button type="submit" value="no" class="confirm-dialog__button">いいえ</button>
+    </div>
+  </form>
+</dialog>
 
 <footer class="app-footer">
   <p>本システムはブラウザ内でのみ動作し、入力データは外部送信されません。</p>

@@ -89,6 +89,14 @@
    * @param {{male:number, female:number}} genderMultiplier
    * @returns {Array<{id:string, label:string, count:number, weight:number}>}
    */
+  function buildPartialLabel(detail) {
+    return CATEGORY_LABELS.partial + '（' + CATEGORY_LABELS[detail.category] + '）・' + GENDER_LABELS[detail.gender];
+  }
+
+  function getPartialDetails(categoryGenderCounts) {
+    return Array.isArray(categoryGenderCounts.partialDetails) ? categoryGenderCounts.partialDetails : [];
+  }
+
   function buildCategoryGenderGroups(categoryGenderCounts, genderMultiplier) {
     var groups = [];
     var categories = [CATEGORY.DRINK, CATEGORY.NO_DRINK, CATEGORY.PARTIAL];
@@ -107,6 +115,15 @@
         });
       }
     }
+
+    getPartialDetails(categoryGenderCounts).forEach(function (detail, index) {
+      groups.push({
+        id: 'partial_' + detail.category + '_' + detail.gender + '_' + index,
+        label: buildPartialLabel(detail),
+        count: detail.count || 0,
+        weight: BASE_CATEGORY_WEIGHT.partial * genderMultiplier[detail.gender],
+      });
+    });
     return groups;
   }
 
@@ -164,6 +181,14 @@
         });
       }
     }
+    getPartialDetails(categoryGenderCounts).forEach(function (detail, index) {
+      groups.push({
+        id: 'partial_' + detail.category + '_' + detail.gender + '_' + index,
+        label: buildPartialLabel(detail),
+        count: detail.count || 0,
+        weight: cfg.weights.partial[detail.gender],
+      });
+    });
     groups.push(buildNoChargeGroup(categoryGenderCounts));
     return groups;
   }
