@@ -22,6 +22,10 @@
       drink: { male: false, female: false },
       no_drink: { male: false, female: false },
     },
+    partialCounts: {
+      drink: { male: 0, female: 0 },
+      no_drink: { male: 0, female: 0 },
+    },
     genderMode: calc.GENDER_MODE.DISCOUNT,
     modeConfigs: {
       discount: shallowCopy(calc.DEFAULT_DISCOUNT_CONFIG),
@@ -86,6 +90,20 @@
     };
   }
 
+  function normalizePartialCounts(counts) {
+    counts = counts || {};
+    return {
+      drink: {
+        male: (counts.drink && counts.drink.male) || 0,
+        female: (counts.drink && counts.drink.female) || 0,
+      },
+      no_drink: {
+        male: (counts.no_drink && counts.no_drink.male) || 0,
+        female: (counts.no_drink && counts.no_drink.female) || 0,
+      },
+    };
+  }
+
   // ---- localStorage 永続化 ----
 
   function persistState() {
@@ -105,6 +123,7 @@
       if (typeof saved.totalBill === 'number') state.totalBill = saved.totalBill;
       if (saved.categoryGenderCounts) state.categoryGenderCounts = normalizeCategoryGenderCounts(saved.categoryGenderCounts);
       if (saved.partialParticipation) state.partialParticipation = normalizePartialParticipation(saved.partialParticipation);
+      if (saved.partialCounts) state.partialCounts = normalizePartialCounts(saved.partialCounts);
       if (saved.genderMode) state.genderMode = saved.genderMode;
       if (saved.modeConfigs) state.modeConfigs = saved.modeConfigs;
       if (saved.roundingUnit) state.roundingUnit = saved.roundingUnit;
@@ -124,10 +143,12 @@
       var category = row.dataset.category;
       var gender = row.dataset.gender;
       var display = row.querySelector('[data-role="count-display"]');
-      var value = gender ? state.categoryGenderCounts[category][gender] : state.categoryGenderCounts[category];
+      var isPartialRow = row.dataset.partial === 'true';
+      var value = isPartialRow ? state.partialCounts[category][gender] : (gender ? state.categoryGenderCounts[category][gender] : state.categoryGenderCounts[category]);
       var partialToggle = row.querySelector('[data-role="partial-toggle"]');
       display.textContent = value;
       if (partialToggle) partialToggle.checked = Boolean(state.partialParticipation[category][gender]);
+      if (isPartialRow) row.hidden = !state.partialParticipation[category][gender];
     });
 
     document.querySelector('input[name="gender-mode"][value="' + state.genderMode + '"]').checked = true;
@@ -152,9 +173,13 @@
 
   // ---- イベントハンドラ ----
 
-  function handleCountChange(category, gender, delta, displayEl) {
+  function handleCountChange(category, gender, delta, displayEl, isPartialRow) {
     var newValue;
-    if (gender) {
+    if (isPartialRow) {
+      var partialCurrent = state.partialCounts[category][gender];
+      newValue = Math.max(0, partialCurrent + delta);
+      state.partialCounts[category][gender] = newValue;
+    } else if (gender) {
       var current = state.categoryGenderCounts[category][gender];
       newValue = Math.max(0, current + delta);
       state.categoryGenderCounts[category][gender] = newValue;
@@ -216,9 +241,8 @@
     ['drink', 'no_drink'].forEach(function (category) {
       ['male', 'female'].forEach(function (gender) {
         if (!state.partialParticipation[category][gender]) return;
-        var count = calculationCounts[category][gender] || 0;
+        var count = state.partialCounts[category][gender] || 0;
         if (count <= 0) return;
-        calculationCounts[category][gender] = 0;
         calculationCounts.partialDetails.push({ category: category, gender: gender, count: count });
       });
     });
@@ -253,16 +277,20 @@
       var category = row.dataset.category;
       var gender = row.dataset.gender || null;
       var displayEl = row.querySelector('[data-role="count-display"]');
+      var isPartialRow = row.dataset.partial === 'true';
       row.querySelector('.btn-decrement').addEventListener('click', function () {
-        handleCountChange(category, gender, -1, displayEl);
+        handleCountChange(category, gender, -1, displayEl, isPartialRow);
       });
       row.querySelector('.btn-increment').addEventListener('click', function () {
-        handleCountChange(category, gender, 1, displayEl);
+        handleCountChange(category, gender, 1, displayEl, isPartialRow);
       });
       var partialToggle = row.querySelector('[data-role="partial-toggle"]');
       if (partialToggle) {
         partialToggle.addEventListener('change', function (e) {
           state.partialParticipation[category][gender] = e.target.checked;
+          document.querySelectorAll('.count-row--partial[data-category="' + category + '"][data-gender="' + gender + '"]').forEach(function (partialRow) {
+            partialRow.hidden = !e.target.checked;
+          });
           render();
         });
       }
