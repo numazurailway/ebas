@@ -233,15 +233,112 @@
   }
 
   /**
+   * 参加人数がいるグループを重みの大きい順（同点は元の並び順）に並べ、
+   * 1人ずつの「席」の配列にする。端数の配分先を決めるのに使う。
+   * @param {Array} groupResults
+   * @returns {Array<{group:Object, memberIndex:number}>}
+   */
+  function buildWeightOrderedSeats(groupResults) {
+    var eligible = groupResults.filter(function (g) {
+      return g.count > 0;
+    });
+    var sorted = eligible.slice().sort(function (a, b) {
+      return b.weight - a.weight;
+    });
+    var seats = [];
+    sorted.forEach(function (g) {
+      for (var i = 0; i < g.count; i++) {
+        seats.push({ group: g, memberIndex: i });
+      }
+    });
+    return seats;
+  }
+
+  /**
+   * 席の配列を先頭（pointer）から順に見て、負の金額にならない席へ amount を加算する。
+   * @returns {boolean} 加算できた場合 true
+   */
+  function applySeatAdjustment(seats, pointer, amount) {
+    for (var tries = 0; tries < seats.length; tries++) {
+      var index = pointer.value % seats.length;
+      pointer.value += 1;
+      var seat = seats[index];
+      var current = seat.group.memberAmounts[seat.memberIndex];
+      var next = current + amount;
+      if (next >= 0) {
+        seat.group.memberAmounts[seat.memberIndex] = next;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 端数処理後に生じた差額を、重みの大きいグループの参加者から1人ずつ「単位」刻みで配分する。
+   * 差額が単位で割り切れない端数は、最後の1人にそのまま反映する。
+   * @param {Array} groupResults
+   * @param {number} diff
+   * @param {number} unit
+   */
+  function distributeDiffAmongMembers(groupResults, diff, unit) {
+    var seats = buildWeightOrderedSeats(groupResults);
+    if (seats.length === 0) {
+      return;
+    }
+
+    var absDiff = Math.abs(diff);
+    var unitStep = diff < 0 ? -unit : unit;
+    var stepsNeeded = Math.floor(absDiff / unit);
+    var remainder = diff - stepsNeeded * unitStep;
+
+    var pointer = { value: 0 };
+    for (var s = 0; s < stepsNeeded; s++) {
+      if (!applySeatAdjustment(seats, pointer, unitStep)) {
+        break;
+      }
+    }
+    if (remainder !== 0) {
+      applySeatAdjustment(seats, pointer, remainder);
+    }
+  }
+
+  /**
+   * 1人あたり金額の配列を、金額ごとに「何人がいくら払うか」の内訳にまとめる。
+   * @param {Array<number>} memberAmounts
+   * @returns {Array<{amount:number, count:number}>} 金額の高い順
+   */
+  function summarizeMemberAmounts(memberAmounts) {
+    var counts = {};
+    var order = [];
+    memberAmounts.forEach(function (amount) {
+      var key = String(amount);
+      if (!(key in counts)) {
+        counts[key] = 0;
+        order.push(amount);
+      }
+      counts[key] += 1;
+    });
+    return order
+      .sort(function (a, b) {
+        return b - a;
+      })
+      .map(function (amount) {
+        return { amount: amount, count: counts[String(amount)] };
+      });
+  }
+
+  /**
    * 正規化済みグループと全体会計から、各グループの1人あたり金額・小計を計算する。
-   * 端数処理後に生じた差額は、参加人数がいるグループの中で最も重みが大きいグループの
-   * 小計にそのまま加算して帳尻を合わせる（同点の場合は CATEGORY_ORDER 順で先に現れた方）。
+   * 端数処理後に生じた差額は、参加人数がいるグループの中で重みが大きい方から
+   * 参加者1人ずつに「単位」刻みで配分する（同点の場合は CATEGORY_ORDER 順で先に現れた方から）。
+   * これにより「1人あたり×人数」の合計が常に小計と一致する
+   * （1グループ内で金額が複数種類になる場合は groups[].perPersonAmounts に内訳を持つ）。
    *
    * @param {Array<{id, label, count, weight}>} groups
    * @param {number} totalBill
    * @param {number} [roundingUnit]
    * @param {string} [roundingMethod]
-   * @returns {{ok:boolean, error?:string, groups?:Array, unitPrice?:number, totalBill?:number, roundedTotal?:number, discrepancy?:number, reconciledGroupId?:string|null}}
+   * @returns {{ok:boolean, error?:string, groups?:Array, unitPrice?:number, totalBill?:number, roundedTotal?:number, discrepancy?:number, reconciledGroupIds?:Array<string>, reconciledGroupId?:string|null}}
    */
   function calculateSplit(groups, totalBill, roundingUnit, roundingMethod) {
     var unit = roundingUnit || DEFAULT_ROUNDING_UNIT;
@@ -268,8 +365,10 @@
         weight: g.weight,
         rawPerPerson: rawPerPerson,
         roundedPerPerson: roundedPerPerson,
+        memberAmounts: g.count > 0 ? new Array(g.count).fill(roundedPerPerson) : [],
         subtotal: roundedPerPerson * g.count,
         adjustment: 0,
+        perPersonAmounts: [],
       };
     });
 
@@ -278,31 +377,25 @@
     }, 0);
     var diff = totalBill - roundedTotalBeforeReconcile;
 
-    var reconciledGroupId = null;
     if (diff !== 0) {
-      var eligible = groupResults.filter(function (g) {
-        return g.count > 0;
-      });
-      if (eligible.length > 0) {
-        var targets = eligible.slice().sort(function (a, b) {
-          return b.weight - a.weight;
-        });
-        reconciledGroupId = targets[0].id;
-
-        if (diff > 0) {
-          targets[0].subtotal += diff;
-          targets[0].adjustment += diff;
-        } else {
-          var remainingReduction = -diff;
-          for (var k = 0; k < targets.length && remainingReduction > 0; k++) {
-            var reduction = Math.min(targets[k].subtotal, remainingReduction);
-            targets[k].subtotal -= reduction;
-            targets[k].adjustment -= reduction;
-            remainingReduction -= reduction;
-          }
-        }
-      }
+      distributeDiffAmongMembers(groupResults, diff, unit);
     }
+
+    var reconciledGroupIds = [];
+    buildWeightOrderedSeats(groupResults)
+      .map(function (seat) { return seat.group; })
+      .filter(function (g, index, arr) { return arr.indexOf(g) === index; })
+      .forEach(function (g) {
+        var newSubtotal = g.memberAmounts.reduce(function (sum, amount) {
+          return sum + amount;
+        }, 0);
+        g.adjustment = newSubtotal - g.roundedPerPerson * g.count;
+        g.subtotal = newSubtotal;
+        g.perPersonAmounts = summarizeMemberAmounts(g.memberAmounts);
+        if (g.adjustment !== 0) {
+          reconciledGroupIds.push(g.id);
+        }
+      });
 
     var roundedTotal = groupResults.reduce(function (sum, g) {
       return sum + g.subtotal;
@@ -315,7 +408,8 @@
       totalBill: totalBill,
       roundedTotal: roundedTotal,
       discrepancy: roundedTotal - totalBill,
-      reconciledGroupId: reconciledGroupId,
+      reconciledGroupIds: reconciledGroupIds,
+      reconciledGroupId: reconciledGroupIds.length > 0 ? reconciledGroupIds[0] : null,
     };
   }
 

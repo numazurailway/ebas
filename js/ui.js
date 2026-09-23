@@ -417,6 +417,21 @@
     return Math.round(amount).toLocaleString('ja-JP') + '円';
   }
 
+  function formatPerPersonCell(group) {
+    var breakdown = group.perPersonAmounts;
+    if (!breakdown || breakdown.length === 0) {
+      return formatYen(group.roundedPerPerson);
+    }
+    if (breakdown.length === 1) {
+      return formatYen(breakdown[0].amount);
+    }
+    return breakdown
+      .map(function (entry) {
+        return formatYen(entry.amount) + '×' + entry.count + '人';
+      })
+      .join(' + ');
+  }
+
   function buildResultTable(title, splitResult) {
     var wrapper = document.createElement('div');
     wrapper.className = 'result-block';
@@ -446,7 +461,7 @@
       row.innerHTML =
         '<td>' + g.label + '</td>' +
         '<td>' + g.count + '人</td>' +
-        '<td>' + formatYen(g.roundedPerPerson) + '</td>' +
+        '<td>' + formatPerPersonCell(g) + '</td>' +
         '<td>' + formatYen(g.subtotal) + '</td>';
       tbody.appendChild(row);
     });
@@ -466,9 +481,12 @@
     adjustedGroups.forEach(function (adjustedGroup) {
       var adjustment = Number(adjustedGroup.adjustment) || 0;
       var sign = adjustment >= 0 ? '+' : '';
+      var isSplitAcrossMembers = Array.isArray(adjustedGroup.perPersonAmounts) && adjustedGroup.perPersonAmounts.length > 1;
+      var detail = isSplitAcrossMembers ? '（グループ内で1人ずつ配分。上表の「1人あたり」参照）' : '';
       var note = document.createElement('p');
       note.className = 'result-note';
-      note.textContent = '端数調整: ' + sign + Math.round(adjustment).toLocaleString('ja-JP') + '円 → 「' + adjustedGroup.label + '」グループの合計に反映';
+      note.textContent =
+        '端数調整: 「' + adjustedGroup.label + '」グループの合計に ' + sign + Math.round(adjustment).toLocaleString('ja-JP') + '円' + detail;
       wrapper.appendChild(note);
     });
 
@@ -526,6 +544,25 @@
     var unevenResult = calc.calculateSplit(unevenGroups, 10000, 100, 'up');
     assertEqual('uneven split discrepancy', unevenResult.discrepancy, 0);
     assertEqual('uneven split reconciled to highest weight group', unevenResult.reconciledGroupId, 'a');
+    var unevenSubtotalsFromPerPerson = unevenResult.groups.reduce(function (sum, g) {
+      return sum + g.perPersonAmounts.reduce(function (s, entry) { return s + entry.amount * entry.count; }, 0);
+    }, 0);
+    assertEqual('uneven split per-person breakdown matches total bill', unevenSubtotalsFromPerPerson, 10000);
+
+    // 1人だけのグループで端数調整により金額が変わるケース（PRレビュー指摘の再発防止）
+    // 150円/1人/単位100円/切り上げ: roundedPerPerson=200円だが、調整後は150円になる。
+    var singlePayerGroups = [{ id: 'a', label: 'A', count: 1, weight: 1 }];
+    var singlePayerResult = calc.calculateSplit(singlePayerGroups, 150, 100, 'up');
+    assertEqual('single payer adjusted subtotal', singlePayerResult.groups[0].subtotal, 150);
+    assertEqual('single payer formatted cell uses adjusted amount', formatPerPersonCell(singlePayerResult.groups[0]), '150円');
+    var singlePayerTable = buildResultTable('single payer note test', singlePayerResult);
+    var singlePayerNotes = singlePayerTable.querySelectorAll('.result-note');
+    assertEqual('single payer adjustment note is still shown', singlePayerNotes.length, 1);
+    assertEqual(
+      'single payer adjustment note states the adjustment amount',
+      singlePayerNotes.length > 0 ? singlePayerNotes[0].textContent : null,
+      '端数調整: 「A」グループの合計に -50円'
+    );
 
     // 重み合計0
     var zeroResult = calc.calculateSplit([{ id: 'a', label: 'A', count: 0, weight: 0 }], 1000, 100, 'up');
