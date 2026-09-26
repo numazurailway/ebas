@@ -36,6 +36,7 @@
         matrix: deepCopyMatrix(calc.DEFAULT_CATEGORY_GENDER_MATRIX),
       },
       roundingUnit: calc.DEFAULT_ROUNDING_UNIT,
+      desiredRoundingUnit: calc.DEFAULT_ROUNDING_UNIT,
       customRoundingUnit: 500,
       roundingMethod: calc.DEFAULT_ROUNDING_METHOD,
     };
@@ -131,6 +132,13 @@
       if (saved.genderMode) state.genderMode = saved.genderMode;
       if (saved.modeConfigs) state.modeConfigs = saved.modeConfigs;
       if (saved.roundingUnit) state.roundingUnit = saved.roundingUnit;
+      if (saved.desiredRoundingUnit) {
+        state.desiredRoundingUnit = saved.desiredRoundingUnit;
+      } else if (typeof saved.roundingUnit === 'number') {
+        // 旧バージョンの保存データには desiredRoundingUnit が無いため、
+        // 既存の roundingUnit をユーザーの希望値として引き継ぐ
+        state.desiredRoundingUnit = saved.roundingUnit;
+      }
       if (saved.customRoundingUnit) state.customRoundingUnit = saved.customRoundingUnit;
       if (saved.roundingMethod) state.roundingMethod = saved.roundingMethod;
     } catch (e) {
@@ -270,11 +278,18 @@
     var roundingUnitChanged = false;
     Array.prototype.forEach.call(select.options, function (option) {
       if (option.value === 'custom') return;
-      option.hidden = units.indexOf(Number(option.value)) === -1;
+      var available = units.indexOf(Number(option.value)) !== -1;
+      // iOS Safari 等では option[hidden] が無視され選択できてしまうため disabled も併用する
+      option.hidden = !available;
+      option.disabled = !available;
     });
-    if (state.roundingUnit !== 'custom' && units.indexOf(Number(state.roundingUnit)) === -1) {
-      state.roundingUnit = units[units.length - 1];
-      roundingUnitChanged = true;
+    if (state.roundingUnit !== 'custom') {
+      var desired = state.desiredRoundingUnit || calc.DEFAULT_ROUNDING_UNIT;
+      var nextUnit = units.indexOf(desired) !== -1 ? desired : units[units.length - 1];
+      if (nextUnit !== state.roundingUnit) {
+        state.roundingUnit = nextUnit;
+        roundingUnitChanged = true;
+      }
     }
     return roundingUnitChanged;
   }
@@ -397,6 +412,7 @@
         });
         return;
       }
+      state.desiredRoundingUnit = Number(e.target.value);
       state.roundingUnit = Number(e.target.value);
       syncRoundingUnitControls();
       render();
